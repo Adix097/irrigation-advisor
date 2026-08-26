@@ -1,19 +1,23 @@
+mod db;
 use axum::{ routing::get, Router };
 
 #[tokio::main]
 async fn main() {
-    // initialize structured logging
-    tracing_subscriber::fmt::init();
+    dotenvy::dotenv().ok();
+    tracing_subscriber::fmt::init(); // initialise logging
+
+    // connect to Supabase
+    let pool = db::create_pool().await;
+    tracing::info!("database connected successfully");
 
     // health checkpoint
-    let app = Router::new().route("/health", get(health_check));
+    let app = Router::new().route("/health", get(health_check)).with_state(pool);
 
-    // bind to localhost:3000 using 127.0.0.1
     let listener = tokio::net::TcpListener
         ::bind("127.0.0.1:3000").await
         .expect("Failed to bind to port 3000");
-
     tracing::info!("Server running on http://127.0.0.1:3000");
+
     axum::serve(listener, app).await.expect("Server crashed");
 }
 
