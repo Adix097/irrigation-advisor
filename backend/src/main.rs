@@ -4,7 +4,7 @@ mod infra;
 mod models;
 mod routes;
 
-use axum::{ Router, routing::get };
+use axum::{ routing::{ get, post }, Router };
 use tower_http::cors::{ Any, CorsLayer };
 
 #[tokio::main]
@@ -25,6 +25,8 @@ async fn main() {
         .route("/api/crops", get(routes::get_crops))
         .route("/api/soil-types", get(routes::get_soil_types))
         .route("/api/weather", get(routes::get_weather))
+        .route("/api/farm-profiles", post(routes::create_farm_profile))
+        .route("/api/farm-profiles", get(routes::list_farm_profiles))
         .layer(cors)
         .with_state(pool);
 
