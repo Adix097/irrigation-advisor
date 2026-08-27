@@ -1,9 +1,8 @@
 mod db;
-mod evapotranspiration;
+mod domain;
+mod infra;
 mod models;
 mod routes;
-mod solar;
-mod weather;
 
 use axum::{ Router, routing::get };
 use tower_http::cors::{ Any, CorsLayer };

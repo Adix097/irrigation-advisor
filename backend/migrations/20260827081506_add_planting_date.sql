@@ -1,0 +1,2 @@
+ALTER TABLE farm_profiles
+ADD COLUMN planting_date DATE NOT NULL DEFAULT CURRENT_DATE;

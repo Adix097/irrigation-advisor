@@ -2,7 +2,7 @@ use axum::{ Json, extract::State, http::StatusCode, response::IntoResponse };
 use sqlx::PgPool;
 
 use crate::models::{ Crop, SoilType };
-use crate::weather;
+use crate::infra::weather;
 use axum::extract::Query;
 use serde::Deserialize;
 

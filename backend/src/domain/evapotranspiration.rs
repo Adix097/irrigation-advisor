@@ -1,5 +1,5 @@
-use crate::solar;
-use crate::weather::DailyWeather;
+use crate::domain::solar;
+use crate::infra::weather::DailyWeather;
 use chrono::NaiveDate;
 
 pub fn calculate_et0(day: &DailyWeather, latitude_deg: f64) -> f64 {
