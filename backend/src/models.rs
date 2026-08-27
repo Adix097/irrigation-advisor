@@ -51,3 +51,28 @@ pub struct NewFarmProfile {
     pub pump_flow_rate_lpm: f64,
     pub planting_date: NaiveDate,
 }
+
+#[derive(Debug, Serialize)]
+pub struct IrrigationDay {
+    pub date: String,
+    pub et0_mm: f64,
+    pub kc: f64,
+    pub etc_mm: f64, // crop water requirement before rain adjustment
+    pub rainfall_mm: f64,
+    pub net_irrigation_mm: f64, // after subtracting effective rainfall
+    pub pump_runtime_minutes: f64,
+    pub energy_kwh: f64,
+    pub baseline_energy_kwh: f64, // what a fixed/naive schedule would have used
+}
+
+// full response for GET /api/irrigation-plan/:id
+#[derive(Debug, Serialize)]
+pub struct IrrigationPlanResponse {
+    pub farm_profile_id: i32,
+    pub crop_name: String,
+    pub days: Vec<IrrigationDay>,
+    pub total_energy_kwh: f64,
+    pub total_baseline_energy_kwh: f64,
+    pub energy_saved_kwh: f64,
+    pub energy_saved_percent: f64,
+}

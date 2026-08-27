@@ -27,6 +27,7 @@ async fn main() {
         .route("/api/weather", get(routes::get_weather))
         .route("/api/farm-profiles", post(routes::create_farm_profile))
         .route("/api/farm-profiles", get(routes::list_farm_profiles))
+        .route("/api/irrigation-plan/{id}", get(routes::get_irrigation_plan))
         .layer(cors)
         .with_state(pool);
 
