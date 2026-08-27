@@ -9,6 +9,7 @@ export function HomePage() {
     const [soilTypes, setSoilTypes] = useState<SoilType[]>([]);
     const [profiles, setProfiles] = useState<FarmProfile[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [showForm, setShowForm] = useState(false);
 
     useEffect(() => {
         Promise.all([getCrops(), getSoilTypes(), getFarmProfiles()])
@@ -22,6 +23,7 @@ export function HomePage() {
 
     function handleProfileCreated(profile: FarmProfile) {
         setProfiles((prev) => [profile, ...prev]);
+        setShowForm(false); // collapse the form back down after a successful save
     }
 
     if (error) {
@@ -31,16 +33,33 @@ export function HomePage() {
     return (
         <div className="max-w-2xl mx-auto px-8 py-10 space-y-10">
             <section>
-                <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
-                    Add a farm
-                </h2>
-                <div className="border border-line rounded-md bg-white p-5">
-                    <FarmProfileForm
-                        crops={crops}
-                        soilTypes={soilTypes}
-                        onCreated={handleProfileCreated}
-                    />
-                </div>
+                {!showForm ? (
+                    <button
+                        onClick={() => setShowForm(true)}
+                        className="w-full border border-line rounded-md bg-white p-4 text-left font-medium text-accent hover:bg-cream transition"
+                    >
+                        + Create Farm
+                    </button>
+                ) : (
+                    <div className="border border-line rounded-md bg-white p-5">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
+                                Add a farm
+                            </h2>
+                            <button
+                                onClick={() => setShowForm(false)}
+                                className="text-sm text-muted hover:text-ink transition"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                        <FarmProfileForm
+                            crops={crops}
+                            soilTypes={soilTypes}
+                            onCreated={handleProfileCreated}
+                        />
+                    </div>
+                )}
             </section>
 
             <section>
