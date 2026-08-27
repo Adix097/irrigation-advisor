@@ -57,3 +57,12 @@ export interface IrrigationPlanResponse {
     energy_saved_kwh: number;
     energy_saved_percent: number;
 }
+
+// Mirrors backend/src/infra/weather.rs -> GeocodeResult
+export interface GeocodeResult {
+    name: string;
+    lat: number;
+    lon: number;
+    country: string;
+    state: string | null;
+}

@@ -1,6 +1,12 @@
 import { useState } from "react";
-import type { Crop, SoilType, NewFarmProfile, FarmProfile } from "../types";
-import { createFarmProfile } from "../api";
+import type {
+    Crop,
+    SoilType,
+    NewFarmProfile,
+    FarmProfile,
+    GeocodeResult,
+} from "../types";
+import { createFarmProfile, geocodeLocation } from "../api";
 
 interface Props {
     crops: Crop[];
@@ -8,11 +14,10 @@ interface Props {
     onCreated: (profile: FarmProfile) => void;
 }
 
-// placeholders
 const initialFormState: NewFarmProfile = {
     profile_name: "",
-    location_lat: 28.6139,
-    location_lon: 77.209,
+    location_lat: 0,
+    location_lon: 0,
     crop_id: 0,
     soil_type_id: 0,
     field_area_hectares: 1,
@@ -26,15 +31,40 @@ export function FarmProfileForm({ crops, soilTypes, onCreated }: Props) {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // single generic change handler
-    function handleChange(
-        field: keyof NewFarmProfile,
-        value: string | number
-    ) {
+    const [locationQuery, setLocationQuery] = useState("");
+    const [locationResults, setLocationResults] = useState<GeocodeResult[]>([]);
+    const [selectedLocation, setSelectedLocation] = useState<GeocodeResult | null>(null);
+    const [searching, setSearching] = useState(false);
+
+    function handleChange(field: keyof NewFarmProfile, value: string | number) {
         setForm((prev) => ({ ...prev, [field]: value }));
     }
 
-    async function handleSubmit(e: React.FormEvent): Promise<void> {
+    async function handleLocationSearch() {
+        if (!locationQuery.trim()) return;
+        setSearching(true);
+        setLocationResults([]);
+        try {
+            const results = await geocodeLocation(locationQuery);
+            setLocationResults(results);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Location search failed");
+        } finally {
+            setSearching(false);
+        }
+    }
+
+    function handleSelectLocation(result: GeocodeResult) {
+        setSelectedLocation(result);
+        setLocationResults([]);
+        setForm((prev) => ({
+            ...prev,
+            location_lat: result.lat,
+            location_lon: result.lon,
+        }));
+    }
+
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError(null);
 
@@ -42,12 +72,18 @@ export function FarmProfileForm({ crops, soilTypes, onCreated }: Props) {
             setError("Please select a crop and soil type.");
             return;
         }
+        if (!selectedLocation) {
+            setError("Please search for and select a location.");
+            return;
+        }
 
         setSubmitting(true);
         try {
             const created = await createFarmProfile(form);
             onCreated(created);
-            setForm(initialFormState); // reset for the next entry
+            setForm(initialFormState);
+            setLocationQuery("");
+            setSelectedLocation(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to save profile");
         } finally {
@@ -66,7 +102,6 @@ export function FarmProfileForm({ crops, soilTypes, onCreated }: Props) {
                     required
                     value={form.profile_name}
                     onChange={(e) => handleChange("profile_name", e.target.value)}
-                    placeholder="e.g. North Field - Wheat"
                     className="w-full border border-line rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-accent"
                 />
             </div>
@@ -117,37 +152,59 @@ export function FarmProfileForm({ crops, soilTypes, onCreated }: Props) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-muted mb-1">
-                        Latitude
-                    </label>
+            <div>
+                <label className="block text-sm font-medium text-muted mb-1">
+                    Location
+                </label>
+                <div className="flex gap-2">
                     <input
-                        type="number"
-                        step="0.0001"
-                        required
-                        value={form.location_lat}
-                        onChange={(e) =>
-                            handleChange("location_lat", Number(e.target.value))
-                        }
-                        className="w-full border border-line rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                        type="text"
+                        value={locationQuery}
+                        onChange={(e) => setLocationQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleLocationSearch();
+                            }
+                        }}
+                        className="flex-1 border border-line rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-accent"
                     />
+                    <button
+                        type="button"
+                        onClick={handleLocationSearch}
+                        disabled={searching}
+                        className="border border-line rounded-md px-4 py-2 text-sm font-medium hover:bg-line disabled:opacity-50 transition"
+                    >
+                        {searching ? "..." : "Find"}
+                    </button>
                 </div>
-                <div>
-                    <label className="block text-sm font-medium text-muted mb-1">
-                        Longitude
-                    </label>
-                    <input
-                        type="number"
-                        step="0.0001"
-                        required
-                        value={form.location_lon}
-                        onChange={(e) =>
-                            handleChange("location_lon", Number(e.target.value))
-                        }
-                        className="w-full border border-line rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-                    />
-                </div>
+
+                {locationResults.length > 0 && (
+                    <div className="mt-2 border border-line rounded-md bg-white divide-y divide-line">
+                        {locationResults.map((result, idx) => (
+                            <button
+                                type="button"
+                                key={idx}
+                                onClick={() => handleSelectLocation(result)}
+                                className="w-full text-left px-3 py-2 hover:bg-cream text-sm"
+                            >
+                                {result.name}
+                                {result.state ? `, ${result.state}` : ""}, {result.country}
+                                <span className="text-muted">
+                                    {" "}
+                                    ({result.lat.toFixed(2)}, {result.lon.toFixed(2)})
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {selectedLocation && (
+                    <p className="mt-2 text-sm text-accent">
+                        ✓ {selectedLocation.name}
+                        {selectedLocation.state ? `, ${selectedLocation.state}` : ""}
+                    </p>
+                )}
             </div>
 
             <div>

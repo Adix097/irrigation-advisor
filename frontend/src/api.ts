@@ -4,6 +4,7 @@ import type {
     FarmProfile,
     NewFarmProfile,
     IrrigationPlanResponse,
+    GeocodeResult,
 } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -44,4 +45,8 @@ export function getIrrigationPlan(farmProfileId: number): Promise<IrrigationPlan
     return apiFetch<IrrigationPlanResponse>(
         `/api/irrigation-plan/${farmProfileId}`
     );
+}
+
+export function geocodeLocation(query: string): Promise<GeocodeResult[]> {
+    return apiFetch<GeocodeResult[]>(`/api/geocode?q=${encodeURIComponent(query)}`);
 }
