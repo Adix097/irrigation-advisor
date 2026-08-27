@@ -19,6 +19,8 @@ pub struct ForecastEntry {
 #[derive(Debug, Deserialize)]
 pub struct MainData {
     pub temp: f64,
+    pub temp_min: f64,
+    pub temp_max: f64,
     pub humidity: f64,
 }
 
@@ -33,11 +35,12 @@ pub struct RainData {
     pub three_hour: f64,
 }
 
-// One aggregated day of weather data
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct DailyWeather {
-    pub date: String, // "2026-08-30"
+    pub date: String, // "YYYY-MM-DD"
     pub avg_temp_c: f64,
+    pub temp_min_c: f64,
+    pub temp_max_c: f64,
     pub avg_humidity_pct: f64,
     pub avg_wind_speed_ms: f64,
     pub total_rainfall_mm: f64,
@@ -80,11 +83,21 @@ fn aggregate_by_day(entries: Vec<ForecastEntry>) -> Vec<DailyWeather> {
                     .iter()
                     .map(|e| e.main.temp)
                     .sum::<f64>() / count;
+
+            let temp_min_c = day_entries
+                .iter()
+                .fold(f64::INFINITY, |acc, e| acc.min(e.main.temp_min));
+
+            let temp_max_c = day_entries
+                .iter()
+                .fold(f64::NEG_INFINITY, |acc, e| acc.max(e.main.temp_max));
+
             let avg_humidity_pct =
                 day_entries
                     .iter()
                     .map(|e| e.main.humidity)
                     .sum::<f64>() / count;
+
             let avg_wind_speed_ms =
                 day_entries
                     .iter()
@@ -100,6 +113,8 @@ fn aggregate_by_day(entries: Vec<ForecastEntry>) -> Vec<DailyWeather> {
             DailyWeather {
                 date,
                 avg_temp_c,
+                temp_min_c,
+                temp_max_c,
                 avg_humidity_pct,
                 avg_wind_speed_ms,
                 total_rainfall_mm,

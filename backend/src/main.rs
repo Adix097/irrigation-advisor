@@ -1,6 +1,8 @@
 mod db;
+mod evapotranspiration;
 mod models;
 mod routes;
+mod solar;
 mod weather;
 
 use axum::{ Router, routing::get };
