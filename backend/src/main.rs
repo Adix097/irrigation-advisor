@@ -17,7 +17,7 @@ async fn main() {
     tracing::info!("database connected successfully");
 
     // cors
-    let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any);
+    let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any);
 
     // routes
     let app = Router::new()
