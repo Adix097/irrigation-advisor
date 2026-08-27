@@ -28,6 +28,7 @@ async fn main() {
         .route("/api/farm-profiles", post(routes::create_farm_profile))
         .route("/api/farm-profiles", get(routes::list_farm_profiles))
         .route("/api/irrigation-plan/{id}", get(routes::get_irrigation_plan))
+        .route("/api/geocode", get(routes::geocode))
         .layer(cors)
         .with_state(pool);
 

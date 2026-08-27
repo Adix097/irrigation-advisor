@@ -17,6 +17,11 @@ pub struct WeatherQuery {
     pub lon: f64,
 }
 
+#[derive(Deserialize)]
+pub struct GeocodeQuery {
+    pub q: String,
+}
+
 // GET /api/crops -> returns every crop in the database as JSON
 pub async fn get_crops(State(pool): State<PgPool>) -> impl IntoResponse {
     let result = sqlx
@@ -47,6 +52,17 @@ pub async fn get_soil_types(State(pool): State<PgPool>) -> impl IntoResponse {
         Err(err) => {
             tracing::error!("Failed to fetch soil types: {:?}", err);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch soil types").into_response()
+        }
+    }
+}
+
+/// GET /api/geocode?q=location -> lat, long
+pub async fn geocode(Query(params): Query<GeocodeQuery>) -> impl IntoResponse {
+    match weather::geocode_location(&params.q).await {
+        Ok(results) => (StatusCode::OK, Json(results)).into_response(),
+        Err(err) => {
+            tracing::error!("Geocoding failed: {:?}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Geocoding failed").into_response()
         }
     }
 }

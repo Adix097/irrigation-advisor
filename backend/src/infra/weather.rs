@@ -46,6 +46,32 @@ pub struct DailyWeather {
     pub total_rainfall_mm: f64,
 }
 
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct GeocodeResult {
+    pub name: String,
+    pub lat: f64,
+    pub lon: f64,
+    pub country: String,
+    pub state: Option<String>,
+}
+
+// Resolves a place name into coordinates using
+pub async fn geocode_location(query: &str) -> Result<Vec<GeocodeResult>, reqwest::Error> {
+    let api_key = std::env::var("OPENWEATHER_API_KEY").expect("Invalid API key");
+
+    let url = format!(
+        "https://api.openweathermap.org/geo/1.0/direct?q={}&limit=5&appid={}",
+        urlencoding_lite(query),
+        api_key
+    );
+
+    reqwest::get(&url).await?.json::<Vec<GeocodeResult>>().await
+}
+
+fn urlencoding_lite(s: &str) -> String {
+    s.replace(' ', "%20")
+}
+
 // Fetches the 5-day/3-hour forecast for given coordinates and aggregates it into daily summaries
 pub async fn fetch_daily_forecast(lat: f64, lon: f64) -> Result<Vec<DailyWeather>, reqwest::Error> {
     let api_key = std::env
