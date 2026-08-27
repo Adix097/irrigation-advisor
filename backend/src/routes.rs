@@ -2,6 +2,15 @@ use axum::{ Json, extract::State, http::StatusCode, response::IntoResponse };
 use sqlx::PgPool;
 
 use crate::models::{ Crop, SoilType };
+use crate::weather;
+use axum::extract::Query;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+pub struct WeatherQuery {
+    pub lat: f64,
+    pub lon: f64,
+}
 
 // GET /api/crops -> returns every crop in the database as JSON
 pub async fn get_crops(State(pool): State<PgPool>) -> impl IntoResponse {
@@ -33,6 +42,17 @@ pub async fn get_soil_types(State(pool): State<PgPool>) -> impl IntoResponse {
         Err(err) => {
             tracing::error!("Failed to fetch soil types: {:?}", err);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch soil types").into_response()
+        }
+    }
+}
+
+/// GET /api/weather?lat=..&lon=..
+pub async fn get_weather(Query(params): Query<WeatherQuery>) -> impl IntoResponse {
+    match weather::fetch_daily_forecast(params.lat, params.lon).await {
+        Ok(daily) => (StatusCode::OK, Json(daily)).into_response(),
+        Err(err) => {
+            tracing::error!("Failed to fetch weather: {:?}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch weather").into_response()
         }
     }
 }

@@ -1,6 +1,7 @@
 mod db;
 mod models;
 mod routes;
+mod weather;
 
 use axum::{ Router, routing::get };
 use tower_http::cors::{ Any, CorsLayer };
@@ -22,6 +23,7 @@ async fn main() {
         .route("/health", get(health_check))
         .route("/api/crops", get(routes::get_crops))
         .route("/api/soil-types", get(routes::get_soil_types))
+        .route("/api/weather", get(routes::get_weather))
         .layer(cors)
         .with_state(pool);
 
